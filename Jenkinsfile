@@ -51,37 +51,37 @@ pipeline {
                     // We connect to the network 'devops_default' so we can talk to the Postgres DB
                     // that is already running alongside Jenkins.
                     sh '''
-                        cat <<EOF > docker-compose.yml
-                        version: '3.8'
-                        services:
-                        backend:
-                            image: ${BACKEND_IMAGE}:latest
-                            container_name: task-backend
-                            restart: always
-                            ports:
-                            - "5000:5000"
-                            environment:
-                            - DB_HOST=task_db
-                            - DB_USER=postgres
-                            - DB_PASSWORD=password
-                            - DB_NAME=taskmanager
-                            - PORT=5000
-                            networks:
-                            - devops_default
+        cat <<EOF > docker-compose.yml
+        version: '3.8'
+        services:
+        backend:
+            image: ${BACKEND_IMAGE}:latest
+            container_name: task-backend
+            restart: always
+            ports:
+            - "5000:5000"
+            environment:
+            - DB_HOST=task_db
+            - DB_USER=postgres
+            - DB_PASSWORD=password
+            - DB_NAME=taskmanager
+            - PORT=5000
+            networks:
+            - devops_default
 
-                        frontend:
-                            image: ${FRONTEND_IMAGE}:latest
-                            container_name: task-frontend
-                            restart: always
-                            ports:
-                            - "80:80"
-                            networks:
-                            - devops_default
+        frontend:
+            image: ${FRONTEND_IMAGE}:latest
+            container_name: task-frontend
+            restart: always
+            ports:
+            - "80:80"
+            networks:
+            - devops_default
 
-                        networks:
-                        devops_default:
-                            external: true
-                        EOF
+        networks:
+        devops_default:
+            external: true
+        EOF
                     '''
                     
                     // recreate containers because the image hash has changed.
