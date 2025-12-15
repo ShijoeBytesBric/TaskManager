@@ -1,0 +1,14 @@
+FROM jenkins/jenkins:lts
+USER root
+
+# Install Docker CLI so we can run 'docker' commands inside Jenkins
+RUN apt-get update && \
+    apt-get install -y docker.io && \
+    rm -rf /var/lib/apt/lists/*
+
+# Add the jenkins user to the docker group (gid 999 is standard for docker on many linux hosts)
+# Note: You might need to adjust the GID to match your host if you get permission errors, 
+# but 'chmod 666 /var/run/docker.sock' on the host usually solves this easier.
+RUN usermod -aG docker jenkins
+
+USER jenkins

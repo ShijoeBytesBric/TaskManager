@@ -1,0 +1,34 @@
+version: '3.8'
+services:
+  jenkins:
+    build: 
+      context: .
+      dockerfile: Dockerfile.jenkins
+    container_name: jenkins
+    restart: always
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - ./jenkins_home:/var/jenkins_home
+      # Mount the socket so Jenkins can spawn sibling containers on the host
+      - /var/run/docker.sock:/var/run/docker.sock
+    user: root # Temporarily needed to ensure access to the mounted socket
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: task_db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: taskmanager
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+volumes:
+  jenkins_home:
+  pg_data:
