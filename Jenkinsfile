@@ -2,11 +2,8 @@ pipeline {
     agent any
     
     environment {
-        // Your Docker Credentials ID from Phase 2
         DOCKER_CREDS = credentials('dockerhub-creds')
         
-        // Define your Docker Hub image names
-        // REPLACE <YOUR_USER> WITH YOUR DOCKERHUB USERNAME
         BACKEND_IMAGE = "shijoe/task-backend"
         FRONTEND_IMAGE = "shijoe/task-frontend"
     }
@@ -47,9 +44,7 @@ pipeline {
             steps {
                 script {
                     echo "Deploying..."
-                    
-                    // FIXED: Indentation is corrected inside the EOF block
-                    // 'backend' and 'frontend' are now properly indented under 'services'
+
                     sh '''
 cat <<EOF > docker-compose.yml
 version: '3.8'
@@ -84,10 +79,8 @@ networks:
 EOF
                     '''
                     
-                    // Run Compose
                     sh 'docker compose up -d --pull always'
                     
-                    // Cleanup space
                     sh 'docker image prune -f'
                 }
             }
