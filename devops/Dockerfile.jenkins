@@ -1,22 +1,16 @@
 FROM jenkins/jenkins:lts
 USER root
 
-# 1. Install Docker CLI
+# Install Docker CLI and ensure docker group exists
 RUN apt-get update && \
-    apt-get install -y docker.io && \
-    rm -rf /var/lib/apt/lists/*
+    apt-get install -y ca-certificates curl gnupg docker.io && \
+    rm -rf /var/lib/apt/lists/* && \
+    groupadd -f -g 999 docker || true && \
+    usermod -aG docker jenkins
 
-# 2. Install Docker Compose (Standalone Binary)
-# We download the latest version from GitHub
-RUN curl -L "https://github.com/docker/compose/releases/download/v2.24.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose && \
-    chmod +x /usr/local/bin/docker-compose
-
-# 3. Enable 'docker compose' (Space syntax)
-# We link the binary to the cli-plugins folder so the 'docker' command recognizes 'compose'
-RUN mkdir -p /usr/lib/docker/cli-plugins && \
-    ln -s /usr/local/bin/docker-compose /usr/lib/docker/cli-plugins/docker-compose
-
-# 4. Permissions
-RUN usermod -aG docker jenkins
+# Install latest Docker Compose v2 plugin (dynamic version fetch)
+RUN COMPOSE_VERSION=$(curl -s https://api.github.com/repos/docker/compose/releases/latest | grep 'tag_name' | cut -d\" -f4) && \
+    curl -L "https://github.com/docker/compose/releases/download/${COMPOSE_VERSION}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/libexec/docker/cli-plugins/docker-compose && \
+    chmod +x /usr/libexec/docker/cli-plugins/docker-compose
 
 USER jenkins
