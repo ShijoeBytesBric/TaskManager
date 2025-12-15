@@ -1,16 +1,14 @@
 FROM jenkins/jenkins:lts
 USER root
 
-# Install Docker CLI and ensure docker group exists
+# Install Docker CLI so we can run 'docker' commands inside Jenkins
 RUN apt-get update && \
-    apt-get install -y ca-certificates curl gnupg docker.io && \
-    rm -rf /var/lib/apt/lists/* && \
-    groupadd -f -g 999 docker || true && \
-    usermod -aG docker jenkins
+    apt-get install -y docker.io && \
+    rm -rf /var/lib/apt/lists/*
 
-# Install latest Docker Compose v2 plugin (dynamic version fetch)
-RUN COMPOSE_VERSION=$(curl -s https://api.github.com/repos/docker/compose/releases/latest | grep 'tag_name' | cut -d\" -f4) && \
-    curl -L "https://github.com/docker/compose/releases/download/${COMPOSE_VERSION}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/libexec/docker/cli-plugins/docker-compose && \
-    chmod +x /usr/libexec/docker/cli-plugins/docker-compose
+# Add the jenkins user to the docker group (gid 999 is standard for docker on many linux hosts)
+# Note: You might need to adjust the GID to match your host if you get permission errors, 
+# but 'chmod 666 /var/run/docker.sock' on the host usually solves this easier.
+RUN usermod -aG docker jenkins
 
 USER jenkins
