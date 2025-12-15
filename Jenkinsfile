@@ -2,12 +2,13 @@ pipeline {
     agent any
     
     environment {
-        // Your DockerHub credentials ID from Jenkins
+        // Your Docker Credentials ID from Phase 2
         DOCKER_CREDS = credentials('dockerhub-creds')
         
-        // Define image names here
-        BACKEND_IMAGE = "<YOUR_DOCKERHUB_USERNAME>/task-backend"
-        FRONTEND_IMAGE = "<YOUR_DOCKERHUB_USERNAME>/task-frontend"
+        // Define your Docker Hub image names
+        // REPLACE <YOUR_USER> WITH YOUR DOCKERHUB USERNAME
+        BACKEND_IMAGE = "shijoe/task-backend"
+        FRONTEND_IMAGE = "shijoe/task-frontend"
     }
     
     stages {
@@ -20,36 +21,36 @@ pipeline {
         stage('Build Docker Images') {
             steps {
                 script {
-                    echo 'Building Backend...'
+                    echo "Building Backend..."
                     sh "docker build -t ${BACKEND_IMAGE}:latest ./backend"
                     
-                    echo 'Building Frontend...'
-                    // Pass the backend URL as a build arg if needed
+                    echo "Building Frontend..."
                     sh "docker build -t ${FRONTEND_IMAGE}:latest ./frontend"
                 }
             }
         }
         
-        stage('Push to Docker Hub') {
+        stage('Push to Hub') {
             steps {
                 script {
-                    echo 'Logging into Docker Hub...'
-                    // This securely injects user/pass into the login command
+                    echo "Logging in..."
                     sh 'echo $DOCKER_CREDS_PSW | docker login -u $DOCKER_CREDS_USR --password-stdin'
                     
-                    echo 'Pushing images...'
+                    echo "Pushing images..."
                     sh "docker push ${BACKEND_IMAGE}:latest"
                     sh "docker push ${FRONTEND_IMAGE}:latest"
                 }
             }
         }
         
-        stage('Deploy (Local)') {
+        stage('Deploy to EC2') {
             steps {
                 script {
-                    echo 'Deploying with Docker Compose...'
+                    echo "Deploying..."
                     
-                    // Create the production compose file dynamically
+                    // 1. Generate a production compose file dynamically
+                    // We connect to the network 'devops_default' so we can talk to the Postgres DB
+                    // that is already running alongside Jenkins.
                     sh '''
                     cat <<EOF > docker-compose.prod.yml
 version: '3.8'
@@ -61,13 +62,13 @@ services:
     ports:
       - "5000:5000"
     environment:
-      - DB_HOST=postgres
+      - DB_HOST=task_db
       - DB_USER=postgres
       - DB_PASSWORD=password
       - DB_NAME=taskmanager
       - PORT=5000
     networks:
-      - devops_default 
+      - devops_default
 
   frontend:
     image: ${FRONTEND_IMAGE}:latest
@@ -84,10 +85,12 @@ networks:
 EOF
                     '''
                     
-                    // Run standard docker compose commands
-                    sh 'docker compose -f docker-compose.prod.yml up -d --pull always'
+                    // 2. Stop old containers and start new ones
+                    // The "|| true" ensures the pipeline doesn't fail if containers don't exist yet
+                    sh 'docker compose -f docker-compose.prod.yml down || true'
+                    sh 'docker compose -f docker-compose.prod.yml up -d'
                     
-                    // Clean up dangling images to save space
+                    // 3. Cleanup space
                     sh 'docker image prune -f'
                 }
             }
