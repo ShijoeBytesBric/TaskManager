@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
+const { register, metricsMiddleware, taskCounter } = require('./metrics');
 require('dotenv').config();
 
 const app = express();
@@ -9,6 +10,7 @@ const PORT = process.env.PORT || 5000;
 // Enable CORS so the Frontend (Port 80) can hit Backend (Port 5000)
 app.use(cors());
 app.use(express.json());
+app.use(metricsMiddleware);
 
 // Database connection config
 const pool = new Pool({
@@ -29,8 +31,18 @@ pool.connect((err, client, release) => {
 });
 
 // Routes
-app.get('/health', async (req, res) => {
-  res.json({ status: 'healthy', timestamp: new Date().toISOString() });
+// Metrics endpoint for Prometheus
+app.get('/metrics', async (req, res) => {
+  res.set('Content-Type', register.contentType);
+  res.end(await register.metrics());
+});
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'healthy', 
+    timestamp: new Date().toISOString() 
+  });
 });
 
 app.get('/api/tasks', async (req, res) => {
@@ -51,6 +63,7 @@ app.post('/api/tasks', async (req, res) => {
       [title, false]
     );
     res.json(result.rows[0]);
+    taskCounter.inc({ operation: 'create' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Database error' });
