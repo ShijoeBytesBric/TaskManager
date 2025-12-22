@@ -48,7 +48,7 @@ pipeline {
                 script {
                     echo "Deploying..."
 
-                    sh 'docker compose -f docker-compose.yml up -d --pull always'
+                    sh 'docker compose -f docker-compose.prod.yml up -d --pull always'
                     sh 'docker image prune -f'
                 }
             }
