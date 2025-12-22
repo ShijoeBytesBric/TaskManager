@@ -48,7 +48,8 @@ pipeline {
                 script {
                     echo "Deploying..."
 
-                    sh 'docker compose -f docker-compose.prod.yml up -d --pull always'
+                    sh 'docker network create devops_default || true'
+                    sh 'docker compose -p task-app -f docker-compose.prod.yml up -d --pull always --force-recreate'
                     sh 'docker image prune -f'
                 }
             }
@@ -59,7 +60,8 @@ pipeline {
                 script {
                     echo "Deploying monitoring..."
                     
-                    sh 'docker compose -f docker-compose.monitoring.yml up -d'
+                    sh 'docker network create devops_default || true'
+                    sh 'docker compose -p task-monitoring -f docker-compose.monitoring.yml up'
                 }
             }
         }
@@ -111,8 +113,8 @@ pipeline {
         }
         failure {
             echo 'Deployment failed!'
-            sh 'docker compose -f docker-compose.prod.yml logs --tail=50 || true'
-            sh 'docker compose -f docker-compose.monitoring.yml logs --tail=50 || true'
+            sh 'docker compose -p task-app -f docker-compose.prod.yml logs --tail=50 || true'
+            sh 'docker compose -p task-monitoring -f docker-compose.monitoring.yml logs --tail=50 || true'
         }
     }
 }
