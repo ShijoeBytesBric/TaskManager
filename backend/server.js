@@ -14,11 +14,17 @@ app.use(metricsMiddleware);
 
 // Database connection config
 const pool = new Pool({
-  host: process.env.DB_HOST || 'postgres', // Default to 'postgres' service name in Docker
+  host: process.env.DB_HOST,
   port: process.env.DB_PORT || 5432,
-  database: process.env.DB_NAME || 'taskmanager',
+  database: process.env.DB_NAME,
   user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || 'password',
+  password: process.env.DB_PASSWORD,
+  ssl: {
+    rejectUnauthorized: false  // Required for RDS SSL
+  },
+  max: 20,  // Maximum pool size
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
 });
 
 // Test DB Connection on Startup

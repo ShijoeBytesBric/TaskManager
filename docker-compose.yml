@@ -1,0 +1,29 @@
+version: '3.8'
+services:
+  backend:
+    image: ${BACKEND_IMAGE}:latest
+    container_name: task-backend
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      - DB_HOST=database-1.c7yggeqk05te.ap-south-1.rds.amazonaws.com
+      - DB_USER=postgres
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=taskmanager
+      - PORT=5000
+    networks:
+      - devops_default
+
+  frontend:
+    image: ${FRONTEND_IMAGE}:latest
+    container_name: task-frontend
+    restart: always
+    ports:
+      - "80:80"
+    networks:
+      - devops_default
+
+networks:
+  devops_default:
+    external: true
