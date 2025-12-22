@@ -71,7 +71,7 @@ services:
     container_name: postgres-exporter
     restart: always
     environment:
-      - DATA_SOURCE_NAME=postgresql://postgres:postgres123@database-1.c7yggeqk05te.ap-south-1.rds.amazonaws.com:5432/taskmanager?sslmode=disable
+      - DATA_SOURCE_NAME=postgresql://postgres:postgres123@database-1.c7yggeqk05te.ap-south-1.rds.amazonaws.com:5432/taskmanager?sslmode=require
     ports:
       - "9187:9187"
     networks:
