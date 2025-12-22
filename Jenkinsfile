@@ -68,7 +68,7 @@ pipeline {
                     echo "Deploying monitoring..."
                     
                     sh 'docker network create devops_default || true'
-                    sh 'docker compose -p task-monitoring -f docker-compose.monitoring.yml up'
+                    sh 'docker compose -p task-monitoring -f docker-compose.monitoring.yml up -d'
                 }
             }
         }
