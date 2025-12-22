@@ -1,5 +1,12 @@
 pipeline {
     agent any
+
+    options {
+        // Keep only the last 5 builds to save space
+        buildDiscarder(logRotator(numToKeepStr: '5'))
+        // clean up the workspace before starting to remove old temp files
+        skipDefaultCheckout(true)
+    }
     
     environment {
         DOCKER_CREDS = credentials('dockerhub-creds')
